@@ -179,6 +179,21 @@ export interface NextJsWebpackConfig {
   ): any
 }
 
+export type ExperimentalPPRConfig =
+  | boolean
+  | {
+      /**
+       * If provided, the list of matchers that should be used to determine if a
+       * page should have partial prerendering enabled on. This matches the same
+       * format as the `matcher` property in the `middleware.js` file.
+       *
+       * If undefined, all routes will be considered for partial prerendering.
+       *
+       * @see https://nextjs.org/docs/pages/building-your-application/routing/middleware#matcher
+       */
+      readonly matcher?: string | readonly string[]
+    }
+
 export interface ExperimentalConfig {
   prerenderEarlyExit?: boolean
   linkNoTouchStart?: boolean
@@ -359,7 +374,7 @@ export interface ExperimentalConfig {
   /**
    * Using this feature will enable the `react@experimental` for the `app` directory.
    */
-  ppr?: boolean
+  ppr?: ExperimentalPPRConfig
 
   /**
    * Enables experimental taint APIs in React.

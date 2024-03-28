@@ -15,9 +15,7 @@ describe('FileSystemCache', () => {
       fs: nodeFs,
       serverDistDir: cacheDir,
       revalidatedTags: [],
-      experimental: {
-        ppr: false,
-      },
+      pprEnabled: false,
     })
 
     const binary = await fs.readFile(
@@ -57,9 +55,7 @@ describe('FileSystemCache (isrMemory 0)', () => {
     fs: nodeFs,
     serverDistDir: cacheDir,
     revalidatedTags: [],
-    experimental: {
-      ppr: false,
-    },
+    pprEnabled: false,
     maxMemoryCacheSize: 0, // disable memory cache
   })
 

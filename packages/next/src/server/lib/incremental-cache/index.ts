@@ -18,6 +18,7 @@ import {
   NEXT_CACHE_REVALIDATE_TAG_TOKEN_HEADER,
   PRERENDER_REVALIDATE_HEADER,
 } from '../../../lib/constants'
+import type { Revalidate } from '../revalidate'
 
 function toRoute(pathname: string): string {
   return pathname.replace(/\/$/, '').replace(/\/index$/, '') || '/'
@@ -32,7 +33,7 @@ export interface CacheHandlerContext {
   fetchCacheKeyPrefix?: string
   prerenderManifest?: PrerenderManifest
   revalidatedTags: string[]
-  experimental: { ppr: boolean }
+  pprEnabled?: boolean
   _appDir: boolean
   _pagesDir: boolean
   _requestHeaders: IncrementalCache['requestHeaders']
@@ -96,7 +97,7 @@ export class IncrementalCache implements IncrementalCacheType {
     fetchCacheKeyPrefix,
     CurCacheHandler,
     allowedRevalidateHeaderKeys,
-    experimental,
+    pprEnabled,
   }: {
     fs?: CacheFs
     dev: boolean
@@ -113,7 +114,7 @@ export class IncrementalCache implements IncrementalCacheType {
     getPrerenderManifest: () => PrerenderManifest
     fetchCacheKeyPrefix?: string
     CurCacheHandler?: typeof CacheHandler
-    experimental: { ppr: boolean }
+    pprEnabled?: boolean
   }) {
     const debug = !!process.env.NEXT_PRIVATE_DEBUG_CACHE
     this.hasCustomCacheHandler = Boolean(CurCacheHandler)
@@ -184,7 +185,7 @@ export class IncrementalCache implements IncrementalCacheType {
         _appDir: !!appDir,
         _requestHeaders: requestHeaders,
         fetchCacheKeyPrefix,
-        experimental,
+        pprEnabled,
       })
     }
   }
@@ -417,7 +418,7 @@ export class IncrementalCache implements IncrementalCacheType {
     cacheKey: string,
     ctx: {
       kindHint?: IncrementalCacheKindHint
-      revalidate?: number | false
+      revalidate?: Revalidate
       fetchUrl?: string
       fetchIdx?: number
       tags?: string[]
@@ -540,7 +541,7 @@ export class IncrementalCache implements IncrementalCacheType {
     pathname: string,
     data: IncrementalCacheValue | null,
     ctx: {
-      revalidate?: number | false
+      revalidate?: Revalidate
       fetchCache?: boolean
       fetchUrl?: string
       fetchIdx?: number

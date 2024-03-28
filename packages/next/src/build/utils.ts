@@ -1,4 +1,8 @@
-import type { NextConfig, NextConfigComplete } from '../server/config-shared'
+import type {
+  ExperimentalPPRConfig,
+  NextConfig,
+  NextConfigComplete,
+} from '../server/config-shared'
 import type { AppBuildManifest } from './webpack/plugins/app-build-manifest-plugin'
 import type { AssetBinding } from './webpack/loaders/get-module-build-info'
 import type {
@@ -87,6 +91,7 @@ import { interopDefault } from '../lib/interop-default'
 import type { PageExtensions } from './page-extensions-type'
 import { formatDynamicImportPath } from '../lib/format-dynamic-import-path'
 import { isInterceptionRouteAppPath } from '../server/future/helpers/interception-routes'
+import { parsePPRConfig } from '../server/lib/experimental/ppr'
 
 export type ROUTER_TYPE = 'pages' | 'app'
 
@@ -1306,7 +1311,6 @@ export async function buildAppStaticPaths({
   requestHeaders,
   maxMemoryCacheSize,
   fetchCacheKeyPrefix,
-  ppr,
   ComponentMod,
 }: {
   dir: string
@@ -1319,7 +1323,6 @@ export async function buildAppStaticPaths({
   cacheHandler?: string
   maxMemoryCacheSize?: number
   requestHeaders: IncrementalCache['requestHeaders']
-  ppr: boolean
   ComponentMod: AppPageModule
 }) {
   ComponentMod.patchFetch()
@@ -1354,7 +1357,6 @@ export async function buildAppStaticPaths({
     CurCacheHandler: CacheHandler,
     requestHeaders,
     minimalMode: ciEnvironment.hasNextSupport,
-    experimental: { ppr },
   })
 
   return StaticGenerationAsyncStorageWrapper.wrap(
@@ -1366,8 +1368,6 @@ export async function buildAppStaticPaths({
         incrementalCache,
         supportsDynamicHTML: true,
         isRevalidate: false,
-        // building static paths should never postpone
-        experimental: { ppr: false },
       },
     },
     async () => {
@@ -1481,7 +1481,7 @@ export async function isPageStatic({
   isrFlushToDisk,
   maxMemoryCacheSize,
   cacheHandler,
-  ppr,
+  pprConfig,
 }: {
   dir: string
   page: string
@@ -1500,7 +1500,7 @@ export async function isPageStatic({
   maxMemoryCacheSize?: number
   cacheHandler?: string
   nextConfigOutput: 'standalone' | 'export'
-  ppr: boolean
+  pprConfig: ExperimentalPPRConfig | undefined
 }): Promise<{
   isPPR?: boolean
   isStatic?: boolean
@@ -1577,13 +1577,15 @@ export async function isPageStatic({
       const routeModule: RouteModule =
         componentsResult.ComponentMod?.routeModule
 
-      let supportsPPR = false
+      const ppr = parsePPRConfig(pprConfig)
+
+      // If this is an app page, it supports PPR if the configuration allows
+      // this page.
+      const supportsPPR =
+        routeModule.definition.kind === RouteKind.APP_PAGE &&
+        ppr.isSupported(page)
 
       if (pageType === 'app') {
-        if (ppr && routeModule.definition.kind === RouteKind.APP_PAGE) {
-          supportsPPR = true
-        }
-
         const ComponentMod: AppPageModule = componentsResult.ComponentMod
 
         isClientComponent = isClientReference(componentsResult.ComponentMod)
@@ -1672,7 +1674,6 @@ export async function isPageStatic({
             isrFlushToDisk,
             maxMemoryCacheSize,
             cacheHandler,
-            ppr,
             ComponentMod,
           }))
         }
@@ -1750,9 +1751,8 @@ export async function isPageStatic({
 
       // When PPR is enabled, any route may be completely static, so
       // mark this route as static.
-      let isPPR = false
+      let isPPR = supportsPPR
       if (supportsPPR) {
-        isPPR = true
         isStatic = true
       }
 

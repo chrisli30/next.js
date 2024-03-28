@@ -5,7 +5,11 @@ import type { LoadComponentsReturnType } from '../server/load-components'
 import type { OutgoingHttpHeaders } from 'http'
 import type AmpHtmlValidator from 'next/dist/compiled/amphtml-validator'
 import type { FontConfig } from '../server/font-utils'
-import type { ExportPathMap, NextConfigComplete } from '../server/config-shared'
+import type {
+  ExperimentalPPRConfig,
+  ExportPathMap,
+  NextConfigComplete,
+} from '../server/config-shared'
 import type { Span } from '../trace'
 import type { Revalidate } from '../server/lib/revalidate'
 import type { NextEnabledDirectories } from '../server/base-server'
@@ -64,6 +68,7 @@ export interface ExportPageInput {
   nextConfigOutput?: NextConfigComplete['output']
   enableExperimentalReact?: boolean
   enabledDirectories: NextEnabledDirectories
+  pprConfig: ExperimentalPPRConfig | undefined
 }
 
 export type ExportedPageFile = {

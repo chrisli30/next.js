@@ -293,7 +293,17 @@ export const configSchema: zod.ZodType<NextConfig> = z.lazy(() =>
           .optional(),
         parallelServerCompiles: z.boolean().optional(),
         parallelServerBuildTraces: z.boolean().optional(),
-        ppr: z.boolean().optional(),
+        ppr: z
+          .union([
+            z.boolean(),
+            z.object({
+              matcher: z
+                .union([z.string(), z.array(z.string()).readonly()])
+                .optional(),
+            }),
+          ])
+          .readonly()
+          .optional(),
         taint: z.boolean().optional(),
         prerenderEarlyExit: z.boolean().optional(),
         proxyTimeout: z.number().gte(0).optional(),

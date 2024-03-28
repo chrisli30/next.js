@@ -39,6 +39,7 @@ import {
   turborepoTraceAccess,
   TurborepoAccessTraceResult,
 } from '../build/turborepo-access-trace'
+import { parsePPRConfig } from '../server/lib/experimental/ppr'
 
 const envConfig = require('../shared/lib/runtime-config.external')
 
@@ -71,6 +72,7 @@ async function exportPageImpl(
     ampValidatorPath,
     trailingSlash,
     enabledDirectories,
+    pprConfig,
   } = input
 
   if (enableExperimentalReact) {
@@ -220,6 +222,8 @@ async function exportPageImpl(
 
     await fs.mkdir(baseDir, { recursive: true })
 
+    const ppr = parsePPRConfig(pprConfig)
+
     // If the fetch cache was enabled, we need to create an incremental
     // cache instance for this page.
     const incrementalCache =
@@ -231,8 +235,7 @@ async function exportPageImpl(
             distDir,
             dir,
             enabledDirectories,
-            // PPR is not available for Pages.
-            experimental: { ppr: false },
+            pprEnabled: ppr.enabled,
             // skip writing to disk in minimal mode for now, pending some
             // changes to better support it
             flushToDisk: !hasNextSupport,
@@ -271,6 +274,10 @@ async function exportPageImpl(
       locale,
       supportsDynamicHTML: false,
       originalPathname: page,
+      experimental: {
+        ...input.renderOpts.experimental,
+        supportsPPR: isAppDir && ppr.isSupported(page),
+      },
     }
 
     if (hasNextSupport) {
