@@ -104,6 +104,11 @@ function isCatchAll(pathname: string): boolean {
 // test to see if a path is more specific than a catch-all route
 function isMoreSpecific(pathname: string, catchAllRoute: string): boolean {
   const pathnameDepth = pathname.split('/').length
-  const catchAllRouteDepth = catchAllRoute.split('/').length - 1
+
+  // optional catch-all routes also match the root segment, so we offset the depth by 1
+  const catchAllRouteDepth = isOptionalCatchAll(catchAllRoute)
+    ? catchAllRoute.split('/').length - 1
+    : catchAllRoute.split('/').length
+
   return pathnameDepth > catchAllRouteDepth
 }
